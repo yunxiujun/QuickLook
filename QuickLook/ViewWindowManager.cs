@@ -31,6 +31,7 @@ public class ViewWindowManager : IDisposable
 
     private string _invokedPath = string.Empty;
     private ViewerWindow _viewerWindow;
+    internal ViewerWindow CurrentWindow => _viewerWindow;
 
     internal ViewWindowManager()
     {
@@ -66,6 +67,7 @@ public class ViewWindowManager : IDisposable
 
     public void ClosePreview()
     {
+        if (Enhancements.PreviewEnhancements.HasBatch) { Enhancements.PreviewEnhancements.CloseBatch(); return; }
         if (!_viewerWindow.IsVisible)
             return;
 
@@ -108,6 +110,7 @@ public class ViewWindowManager : IDisposable
 
     public void SwitchPreview(string path = null)
     {
+        if (Enhancements.PreviewEnhancements.HasBatch) return;
         if (!_viewerWindow.IsVisible)
             return;
 
@@ -208,6 +211,7 @@ public class ViewWindowManager : IDisposable
 
     private void BeginShowNewWindow(string path, IViewer matchedPlugin)
     {
+        Enhancements.PreviewEnhancements.StopSeek();
         _viewerWindow.UnloadPlugin();
 
         _viewerWindow.BeginShow(matchedPlugin, path, CurrentPluginFailed);
@@ -235,6 +239,7 @@ public class ViewWindowManager : IDisposable
     private void InitNewViewerWindow()
     {
         _viewerWindow = new ViewerWindow();
+        Enhancements.PreviewEnhancements.Track(_viewerWindow);
         _viewerWindow.Closed += (sender, e) =>
         {
             if (ProcessHelper.IsShuttingDown())

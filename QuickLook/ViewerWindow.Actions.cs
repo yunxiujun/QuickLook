@@ -40,6 +40,15 @@ namespace QuickLook;
 
 public partial class ViewerWindow
 {
+    private int _loadGeneration;
+    private void ReloadThisPreview()
+    {
+        if (IsPreviewClosed || string.IsNullOrEmpty(_path)) return;
+        var path = _path;
+        var plugin = PluginManager.GetInstance().FindMatch(path);
+        UnloadPlugin();
+        BeginShow(plugin, path, (_, error) => TrayIconManager.ShowNotification("无法重新加载", error.SourceException.Message, true));
+    }
     internal void Run()
     {
         if (string.IsNullOrEmpty(_path))
@@ -214,6 +223,7 @@ public partial class ViewerWindow
 
     internal void UnloadPlugin()
     {
+        _loadGeneration++;
         // The focused element will not processed by GC: https://stackoverflow.com/questions/30848939/memory-leak-due-to-window-efectivevalues-retention
         FocusManager.SetFocusedElement(this, null);
         Keyboard.DefaultRestoreFocusMode =
@@ -248,6 +258,8 @@ public partial class ViewerWindow
     internal void BeginShow(IViewer matchedPlugin, string path,
         Action<string, ExceptionDispatchInfo> exceptionHandler)
     {
+        if (IsPreviewClosed) return;
+        var generation = ++_loadGeneration;
         _path = path;
         Plugin = matchedPlugin;
 
@@ -300,7 +312,8 @@ public partial class ViewerWindow
 
         if (!IsVisible)
         {
-            Dispatcher.BeginInvoke(new Action(() => this.BringToFront(Topmost)), DispatcherPriority.Render);
+            if (!IsBatchPreview)
+                Dispatcher.BeginInvoke(new Action(() => { if (!IsPreviewClosed) this.BringToFront(Topmost); }), DispatcherPriority.Render);
             Show();
         }
 
@@ -313,13 +326,14 @@ public partial class ViewerWindow
             };
             _autoReloadWatcher.Changed += (_, _) =>
                 // Executed asynchronously to avoid deadlock
-                Dispatcher.BeginInvoke(() => ViewWindowManager.GetInstance().ReloadPreview());
+                Dispatcher.BeginInvoke(() => ReloadThisPreview());
             _autoReloadWatcher.EnableRaisingEvents = true;
         }
 
         // Load plugin, do not block UI
         Dispatcher.BeginInvoke(() =>
         {
+            if (IsPreviewClosed || generation != _loadGeneration) return;
             try
             {
                 Plugin.View(path, ContextObject);
@@ -455,6 +469,7 @@ public partial class ViewerWindow
 
     protected override void OnClosing(CancelEventArgs e)
     {
+        IsPreviewClosed = true;
         UnloadPlugin();
         busyDecorator.Dispose();
 

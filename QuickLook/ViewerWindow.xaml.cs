@@ -46,6 +46,9 @@ public partial class ViewerWindow : Window
     private string _path = string.Empty;
     private FileSystemWatcher _autoReloadWatcher;
     private readonly bool _autoReload;
+    internal string CurrentPath => _path;
+    internal bool IsPreviewClosed { get; private set; }
+    internal bool IsBatchPreview { get; set; }
 
     internal ViewerWindow()
     {
@@ -109,7 +112,7 @@ public partial class ViewerWindow : Window
 
         buttonReload.Click += (_, _) =>
         {
-            ViewWindowManager.GetInstance().ReloadPreview();
+            ReloadThisPreview();
         };
 
         buttonWindowStatus.Click += (_, _) =>
@@ -122,7 +125,7 @@ public partial class ViewerWindow : Window
 
         moreItemReload.Click += (_, _) =>
         {
-            ViewWindowManager.GetInstance().ReloadPreview();
+            ReloadThisPreview();
         };
 
         moreItemCopyAsPath.Click += (_, _) =>
@@ -156,6 +159,8 @@ public partial class ViewerWindow : Window
 
     public new void Close()
     {
+        if (IsPreviewClosed) return;
+        IsPreviewClosed = true;
         // Workaround to prevent DPI jump animation when closing window in .NET Framework 4.6.2
         // Safe to remove this line if QuickLook no longer targets .NET Framework 4.6.2
         Hide();

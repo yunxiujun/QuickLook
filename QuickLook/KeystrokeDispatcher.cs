@@ -68,6 +68,10 @@ internal class KeystrokeDispatcher : IDisposable
 
     private void CallViewWindowManagerInvokeRoutine(KeyEventArgs e, bool isKeyDown)
     {
+        if (Enhancements.PreviewEnhancements.Handle(e, isKeyDown)) return;
+        if (isKeyDown && e.KeyCode == Keys.Space &&
+            NativeMethods.QuickLook.GetFocusedWindowType() != NativeMethods.QuickLook.FocusedWindowType.Invalid)
+            Enhancements.PreviewEnhancements.RecordSource();
         // skip invalid keys, but record the timestamp
         if (!_validKeys.Contains(e.KeyCode))
         {
