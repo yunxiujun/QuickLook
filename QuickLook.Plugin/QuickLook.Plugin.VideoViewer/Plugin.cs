@@ -26,11 +26,19 @@ using System.Windows;
 
 namespace QuickLook.Plugin.VideoViewer;
 
-public sealed class Plugin : IViewer
+public sealed class Plugin : IViewer, IVideoPreviewControl
 {
     private static MediaInfoLib _mediaInfo;
 
     private ViewerPanel _vp;
+    private bool _previewMuted;
+    public bool CanSeek => _vp?.CanSeek == true;
+    public void SeekRelative(TimeSpan offset) => _vp?.SeekRelative(offset);
+    public void SetPreviewMuted(bool muted)
+    {
+        _previewMuted = muted;
+        _vp?.SetPreviewMuted(muted);
+    }
 
     public int Priority => -3;
 
@@ -82,6 +90,7 @@ public sealed class Plugin : IViewer
 
     public void Prepare(string path, ContextObject context)
     {
+        _mediaInfo.Open(path);
         string videoCodec = _mediaInfo.Get(StreamKind.Video, 0, "Format");
         if (!string.IsNullOrWhiteSpace(videoCodec)) // video
         {
@@ -123,7 +132,10 @@ public sealed class Plugin : IViewer
 
     public void View(string path, ContextObject context)
     {
+        // Multiple windows can Prepare before their deferred View callbacks execute.
+        _mediaInfo.Open(path);
         _vp = new ViewerPanel(context);
+        _vp.SetPreviewMuted(_previewMuted);
 
         context.ViewerContent = _vp;
 

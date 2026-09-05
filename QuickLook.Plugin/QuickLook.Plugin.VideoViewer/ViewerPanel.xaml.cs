@@ -55,6 +55,23 @@ public partial class ViewerPanel : UserControl, IDisposable, INotifyPropertyChan
     private bool _isPlaying;
     private bool _wasPlaying;
     private bool _shouldLoop;
+    private bool _previewMuted;
+    private double _preferredVolume;
+
+    public bool CanSeek => HasVideo && mediaElement != null && mediaElement.MediaDuration > 0;
+
+    public void SeekRelative(TimeSpan offset)
+    {
+        if (!CanSeek) return;
+        mediaElement.MediaPosition = Math.Max(0L, Math.Min(mediaElement.MediaDuration - 1,
+            mediaElement.MediaPosition + offset.Ticks));
+    }
+
+    public void SetPreviewMuted(bool muted)
+    {
+        _previewMuted = muted;
+        if (mediaElement != null) mediaElement.Volume = muted ? 0 : _preferredVolume;
+    }
 
     public ViewerPanel(ContextObject context)
     {
@@ -362,10 +379,11 @@ public partial class ViewerPanel : UserControl, IDisposable, INotifyPropertyChan
 
     public double LinearVolume
     {
-        get => mediaElement.Volume;
+        get => _preferredVolume;
         set
         {
-            mediaElement.Volume = value;
+            _preferredVolume = Math.Max(0d, Math.Min(1d, value));
+            if (mediaElement != null) mediaElement.Volume = _previewMuted ? 0 : _preferredVolume;
             OnPropertyChanged();
         }
     }
