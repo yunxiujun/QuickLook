@@ -11,8 +11,12 @@ foreach ($file in $metadata.Files) {
     if (!$from.StartsWith($backup+'\', [StringComparison]::OrdinalIgnoreCase) -or !$to.StartsWith($target+'\', [StringComparison]::OrdinalIgnoreCase)) { throw 'Invalid backup path' }
     if (!(Test-Path -LiteralPath $from)) { throw "Missing backup: $file" }
 }
-Get-Process QuickLook -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $exe } | Stop-Process
+$running = @(Get-Process QuickLook -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $exe })
+foreach ($process in $running) { Stop-Process -Id $process.Id; $process.WaitForExit() }
 try {
     foreach ($file in $metadata.Files) { Copy-Item -LiteralPath (Join-Path $backup $file) -Destination (Join-Path $target $file) -Force }
-} finally { Start-Process -FilePath $exe -WorkingDirectory $target -WindowStyle Hidden }
+} finally {
+    $started = Start-Process -FilePath $exe -WorkingDirectory $target -WindowStyle Hidden -PassThru
+    try { [void]$started.WaitForInputIdle(10000) } catch { }
+}
 Write-Output 'Original binaries restored. Current settings and saved files were preserved.'

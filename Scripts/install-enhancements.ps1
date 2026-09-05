@@ -17,7 +17,8 @@ foreach ($entry in $manifest) {
     if ((Get-FileHash -LiteralPath (Join-Path $PSScriptRoot ('payload/' + $entry.Path))).Hash -ne $entry.SHA256) { throw "Payload checksum failed: $($entry.Path)" }
 }
 New-Item -ItemType Directory -Path $backup | Out-Null
-Get-Process QuickLook -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $exe } | Stop-Process
+$running = @(Get-Process QuickLook -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $exe })
+foreach ($process in $running) { Stop-Process -Id $process.Id; $process.WaitForExit() }
 try {
     Copy-Item -LiteralPath (Join-Path $target 'UserData') -Destination (Join-Path $backup 'UserData') -Recurse
     foreach ($entry in $manifest) {
@@ -43,5 +44,8 @@ try {
         if (Test-Path -LiteralPath $old) { Copy-Item -LiteralPath $old -Destination (Join-Path $target $entry.Path) -Force }
     }
     throw
-} finally { Start-Process -FilePath $exe -WorkingDirectory $target -WindowStyle Hidden }
+} finally {
+    $started = Start-Process -FilePath $exe -WorkingDirectory $target -WindowStyle Hidden -PassThru
+    try { [void]$started.WaitForInputIdle(10000) } catch { }
+}
 Write-Output "Installed. Backup: $backup"
