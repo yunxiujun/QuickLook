@@ -20,6 +20,6 @@ try {
     $manifest | ConvertTo-Json | Set-Content -LiteralPath "$package/manifest.json" -Encoding UTF8
     Copy-Item -LiteralPath "$PSScriptRoot/install-enhancements.ps1", "$PSScriptRoot/rollback-enhancements.ps1" -Destination $package -Force
     Copy-Item -LiteralPath "$repo/ENHANCEMENTS.zh-CN.md" -Destination "$package/README.md" -Force
-    Copy-Item -LiteralPath "$repo/LICENSE" -Destination $package -Force
+    Copy-Item -LiteralPath "$repo/LICENSE-GPL.txt" -Destination $package -Force
     Compress-Archive -Path "$package/*" -DestinationPath "$repo/artifacts/QuickLook-4.5.0-enhancements.zip" -Force
 } finally { Pop-Location }
