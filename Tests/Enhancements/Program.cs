@@ -26,6 +26,14 @@ try
     await Fails(() => QuickSaveService.CopyAsync(Path.Combine(input, "说明.txt"), blocked));
     Check(!Directory.EnumerateFiles(root, "*.partial", SearchOption.AllDirectories).Any(), "No partial files after failure");
     Check(File.ReadAllText(blocked) == "unchanged", "Existing target preserved");
+    var selected = SelectionPaths.Parse("\"" + Path.Combine(input, "图片.JPG") + "\"\r\n" + Path.Combine(input, "电影.mkv"));
+    Check(selected.Length == 2 && selected[0].EndsWith("图片.JPG"), "Everything quoted unicode selection order");
+    Check(SelectionPaths.Parse(string.Join("\n", selected.Concat(selected))).Length == 2, "Everything selection deduplication");
+    var many = Enumerable.Range(0, 12).Select(i => Path.Combine(input, i + ".txt")).ToArray();
+    foreach (var file in many) File.WriteAllText(file, "fixture");
+    Check(SelectionPaths.Parse(string.Join("\r\n", many)).Length == 10, "Everything rejects over-limit selection");
+    await Fails(() => Task.FromResult(SelectionPaths.Parse("not a file")[0]));
+    Console.WriteLine("PASS: Everything quoted/unicode paths, selection order, duplicates, over-limit and invalid input");
     Console.WriteLine("PASS: categorization, unicode paths, concurrent collisions, byte integrity, source preservation, invalid source/target, partial cleanup");
 }
 finally { Directory.Delete(root, true); }

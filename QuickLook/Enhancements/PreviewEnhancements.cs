@@ -77,20 +77,24 @@ internal static class PreviewEnhancements
         {
             _openGeneration++; _opening = false; Held.Add(key); e.Handled = true; CloseBatch(); return true;
         }
-        if (key == Forms.Keys.Space &&
-            NativeMethods.QuickLook.GetFocusedWindowType() == NativeMethods.QuickLook.FocusedWindowType.Explorer)
+        var sourceType = key == Forms.Keys.Space ? NativeMethods.QuickLook.GetFocusedWindowType() :
+            NativeMethods.QuickLook.FocusedWindowType.Invalid;
+        if (key == Forms.Keys.Space && (sourceType == NativeMethods.QuickLook.FocusedWindowType.Explorer ||
+            sourceType == NativeMethods.QuickLook.FocusedWindowType.Everything))
         {
             // Never perform Shell COM calls or load plugins inside WH_KEYBOARD_LL.
             var source = ExplorerSelection.GetForegroundWindow();
             _source = source; _opening = true;
             var generation = ++_openGeneration;
             Held.Add(key); e.Handled = true;
-            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+            Application.Current.Dispatcher.BeginInvoke(new Action(async () =>
             {
                 try
                 {
                     if (generation != _openGeneration || ExplorerSelection.GetForegroundWindow() != source) return;
-                    var selected = ExplorerSelection.Read(source);
+                    var selected = sourceType == NativeMethods.QuickLook.FocusedWindowType.Everything
+                        ? await EverythingSelection.ReadAsync(source) : ExplorerSelection.Read(source);
+                    if (generation != _openGeneration || ExplorerSelection.GetForegroundWindow() != source) return;
                     if (selected.Length > 1 || HasBatch) ToggleBatch(selected, source);
                     else if (selected.Length == 1) ViewWindowManager.GetInstance().TogglePreview(selected[0]);
                 }
