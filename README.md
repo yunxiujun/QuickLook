@@ -1,4 +1,24 @@
 
+# QuickLook 增强版（基于 4.5.0）
+
+维护分支：`enhancements`。2026-09-06 已部署并由用户实测确认，包括 Everything 多选平铺。
+
+| 操作 | 功能 |
+| --- | --- |
+| Ins | 复制当前预览原文件，自动分类为图片、视频、其他文件；重名编号，不覆盖 |
+| A / D | 视频后退 / 前进 5 秒，支持长按持续跳转 |
+| 资源管理器或 Everything 多选后轻按空格 | 2～9 个独立窗口自动平铺，松手保持 |
+| Esc | 一次关闭本次整组预览窗口 |
+| 托盘右键 → 增强功能设置 | 修改保存目录及视频跳转参数 |
+
+多视频同时播放，仅当前操作窗口有声音；原有单文件左右键切换保持不变。
+
+详见 [中文使用、安装与回滚说明](ENHANCEMENTS.zh-CN.md) 和 [维护交接](HANDOFF.md)。官方包直接覆盖主程序会丢失增强功能，后续应合入官方源码后重新构建。本仓库不包含个人设置、私有路径、凭据或安装备份。
+
+以下保留官方项目介绍。
+
+---
+
 <!-- Hero Section with Gradient Background Effect -->
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/1687847/82130498-8c3eac80-97d4-11ea-9e88-372ab9c50295.png">
