@@ -56,6 +56,11 @@ internal partial class TrayIconManager : IDisposable
                 new TraySeparator(),
                 new TrayMenuItem()
                 {
+                    Header = "增强功能设置",
+                    Command = new RelayCommand(() => Enhancements.EnhancementSettings.Show()),
+                },
+                new TrayMenuItem()
+                {
                    Header = TranslationHelper.Get("Icon_CheckUpdate"),
                    Command = new RelayCommand(() => Updater.CheckForUpdates()),
                 },
