@@ -26,7 +26,7 @@ internal static class EnhancementSettings
             if (dialog.ShowDialog(form) == DialogResult.OK) root.Text = dialog.SelectedPath; };
         var open = new Button { Left = 20, Top = 85, Width = 120, Text = "打开保存目录" };
         open.Click += (_, _) => { try { Process.Start("explorer.exe", "\"" + Path.GetFullPath(root.Text) + "\""); }
-            catch (Exception e) { MessageBox.Show(form, e.Message); } };
+            catch (Exception e) { System.Windows.Forms.MessageBox.Show(form, e.Message); } };
         var step = Number(form, "跳转秒数", 130, StepSeconds, 1, 600);
         var delay = Number(form, "长按延迟（毫秒）", 165, HoldDelay, 100, 2000);
         var repeat = Number(form, "重复间隔（毫秒）", 200, RepeatInterval, 100, 2000);
@@ -45,7 +45,7 @@ internal static class EnhancementSettings
                 SettingHelper.Set("RepeatInterval", (int)repeat.Value, Domain);
                 form.Close();
             }
-            catch (Exception e) { MessageBox.Show(form, e.Message, "无法保存设置"); }
+            catch (Exception e) { System.Windows.Forms.MessageBox.Show(form, e.Message, "无法保存设置"); }
         };
         form.Controls.AddRange([new Label { Left = 20, Top = 18, Width = 550,
             Text = "Ins 复制保存位置（自动分类为图片、视频、其他文件）" }, root, browse, open, save]);

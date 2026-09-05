@@ -1,0 +1,24 @@
+name: Build enhancements
+on:
+  push:
+    branches: [enhancements]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build and test patch
+        shell: pwsh
+        run: ./Scripts/build-enhancements.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: QuickLook-4.5.0-enhancements
+          path: artifacts/QuickLook-4.5.0-enhancements.zip
