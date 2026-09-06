@@ -6,6 +6,21 @@ using System.Threading.Tasks;
 
 var root = Path.Combine(Path.GetTempPath(), "quicklook-save-tests-" + Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(root);
+var hold = new HoldRepeat();
+hold.Start(0, 350, 200);
+Check(!hold.Tick(349), "Short press must not repeat");
+Check(hold.Tick(350), "Held key starts repeating after delay");
+for (var time = 550; time <= 5550; time += 200)
+    Check(hold.Tick(time), "Hold continues without OS key-repeat or async key state");
+hold.Stop();
+Check(!hold.Tick(10000), "Release or context change stops repeating");
+hold.Start(11000, 350, 200);
+hold.Stop();
+Check(!hold.Tick(11350), "Tap released before delay stays a single seek");
+hold.Start(12000, 350, 200);
+Check(hold.Tick(20000) && !hold.Tick(20000), "Delayed UI tick does not cause catch-up seek storm");
+hold.Stop();
+Console.WriteLine("PASS: continuous held seek, tap, release/cancel and delayed-tick behavior");
 try
 {
     var input = Path.Combine(root, "输入"); Directory.CreateDirectory(input);

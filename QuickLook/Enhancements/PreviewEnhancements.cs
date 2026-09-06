@@ -24,13 +24,13 @@ internal static class PreviewEnhancements
     private static DispatcherTimer _seekTimer;
     private static ViewerWindow _seekWindow;
     private static Forms.Keys _seekKey;
-    private static long _nextSeek;
+    private static readonly HoldRepeat SeekRepeat = new();
+    private static long Now => System.Diagnostics.Stopwatch.GetTimestamp() * 1000 / System.Diagnostics.Stopwatch.Frequency;
     private static bool _opening;
     private static int _openGeneration;
     internal static bool HasBatch => Batch.Count > 0;
 
     [DllImport("user32.dll")] private static extern bool SetWindowPos(IntPtr window, IntPtr after, int x, int y, int width, int height, uint flags);
-    [DllImport("user32.dll")] private static extern short GetAsyncKeyState(int key);
 
     internal static void RecordSource() => _source = ExplorerSelection.GetForegroundWindow();
     internal static void Track(ViewerWindow window)
@@ -127,14 +127,13 @@ internal static class PreviewEnhancements
         {
             Held.Add(key); e.Handled = true; StopSeek();
             _seekKey = key; _seekWindow = Target;
-            Seek(); _nextSeek = (System.Diagnostics.Stopwatch.GetTimestamp() / (System.Diagnostics.Stopwatch.Frequency / 1000)) + EnhancementSettings.HoldDelay;
+            Seek(); SeekRepeat.Start(Now, EnhancementSettings.HoldDelay, EnhancementSettings.RepeatInterval);
             _seekTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(25) };
             _seekTimer.Tick += (_, _) =>
             {
-                if (!InScope() || Target != _seekWindow || (GetAsyncKeyState((int)_seekKey) & 0x8000) == 0 ||
+                if (!InScope() || Target != _seekWindow || !Held.Contains(_seekKey) ||
                     Keyboard.Modifiers != ModifierKeys.None) { StopSeek(); return; }
-                if ((System.Diagnostics.Stopwatch.GetTimestamp() / (System.Diagnostics.Stopwatch.Frequency / 1000)) >= _nextSeek)
-                { Seek(); _nextSeek = (System.Diagnostics.Stopwatch.GetTimestamp() / (System.Diagnostics.Stopwatch.Frequency / 1000)) + EnhancementSettings.RepeatInterval; }
+                if (SeekRepeat.Tick(Now)) Seek();
             };
             _seekTimer.Start(); return true;
         }
@@ -143,7 +142,7 @@ internal static class PreviewEnhancements
 
     private static void Seek() => (_seekWindow?.Plugin as IVideoPreviewControl)?.SeekRelative(
         TimeSpan.FromSeconds((_seekKey == Forms.Keys.A ? -1 : 1) * EnhancementSettings.StepSeconds));
-    internal static void StopSeek() { _seekTimer?.Stop(); _seekTimer = null; _seekWindow = null; }
+    internal static void StopSeek() { SeekRepeat.Stop(); _seekTimer?.Stop(); _seekTimer = null; _seekWindow = null; }
 
     private static async void Save(ViewerWindow window)
     {
