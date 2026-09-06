@@ -29,6 +29,9 @@
                 <Style TargetType="Grid">
                     <Setter Property="Visibility" Value="Collapsed" />
                     <Style.Triggers>
+                        <DataTrigger Binding="{Binding HasVideo, ElementName=viewerPanel}" Value="True">
+                            <Setter Property="Opacity" Value="0" />
+                        </DataTrigger>
                         <DataTrigger Binding="{Binding HasVideo, ElementName=viewerPanel}" Value="False">
                             <Setter Property="Visibility" Value="Visible" />
                         </DataTrigger>

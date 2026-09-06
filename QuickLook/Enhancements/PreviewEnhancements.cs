@@ -129,6 +129,7 @@ internal static class PreviewEnhancements
             Held.Add(key); e.Handled = true; StopSeek();
             _seekKey = key; _seekWindow = Target;
             _seekRate = 1d; (_seekWindow.Plugin as IVideoPreviewControl)?.SetPlaybackRate(1d);
+            (_seekWindow.Plugin as IVideoPreviewControl)?.ShowPlaybackControls();
             Seek(); SeekRepeat.Start(Now, EnhancementSettings.HoldDelay, EnhancementSettings.RepeatInterval);
             _seekTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(25) };
             _seekTimer.Tick += (_, _) =>
@@ -139,6 +140,10 @@ internal static class PreviewEnhancements
                 {
                     _seekRate = Math.Min(5d, _seekRate + 1d);
                     (_seekWindow.Plugin as IVideoPreviewControl)?.SetPlaybackRate(_seekRate);
+                    // DirectShow's rate property is capped at 2x on some builds.
+                    // Add the missing timeline delta so 3x-5x remains real in wall-clock time.
+                    if (_seekRate > 2d)
+                        (_seekWindow.Plugin as IVideoPreviewControl)?.SeekRelative(TimeSpan.FromMilliseconds((_seekRate - 2d) * 200d));
                 }
             };
             _seekTimer.Start(); return true;

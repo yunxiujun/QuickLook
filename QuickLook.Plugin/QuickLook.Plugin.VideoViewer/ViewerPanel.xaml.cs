@@ -87,6 +87,13 @@ public partial class ViewerPanel : UserControl, IDisposable, INotifyPropertyChan
         }
     }
 
+    public void ShowPlaybackControls()
+    {
+        if (!HasVideo) return;
+        var show = (Storyboard)videoControlContainer.FindResource("ShowControlStoryboard");
+        show.Begin();
+    }
+
     public ViewerPanel(ContextObject context)
     {
         InitializeComponent();
