@@ -73,6 +73,20 @@ public partial class ViewerPanel : UserControl, IDisposable, INotifyPropertyChan
         if (mediaElement != null) mediaElement.Volume = muted ? 0 : _preferredVolume;
     }
 
+    public void SetPlaybackRate(double rate)
+    {
+        if (mediaElement?.MediaUriPlayer == null) return;
+        var type = mediaElement.MediaUriPlayer.GetType();
+        foreach (var name in new[] { "SpeedRatio", "PlaybackRate", "Rate" })
+        {
+            var property = type.GetProperty(name);
+            if (property?.CanWrite == true)
+            {
+                try { property.SetValue(mediaElement.MediaUriPlayer, Convert.ChangeType(Math.Max(.25, Math.Min(5, rate)), property.PropertyType)); return; } catch { }
+            }
+        }
+    }
+
     public ViewerPanel(ContextObject context)
     {
         InitializeComponent();

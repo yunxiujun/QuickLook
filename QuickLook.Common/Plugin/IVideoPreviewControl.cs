@@ -8,4 +8,5 @@ public interface IVideoPreviewControl
     bool CanSeek { get; }
     void SeekRelative(TimeSpan offset);
     void SetPreviewMuted(bool muted);
+    void SetPlaybackRate(double rate);
 }
