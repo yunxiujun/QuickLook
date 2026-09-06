@@ -39,8 +39,8 @@ public sealed class Plugin : IViewer, IVideoPreviewControl
         _previewMuted = muted;
         _vp?.SetPreviewMuted(muted);
     }
-    public void SetPlaybackRate(double rate) => _vp?.SetPlaybackRate(rate);
     public void ShowPlaybackControls() => _vp?.ShowPlaybackControls();
+    public void HidePlaybackControls() => _vp?.HidePlaybackControls();
 
     public int Priority => -3;
 

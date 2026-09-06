@@ -56,6 +56,7 @@ public partial class ViewerPanel : UserControl, IDisposable, INotifyPropertyChan
     private bool _wasPlaying;
     private bool _shouldLoop;
     private bool _previewMuted;
+    private bool _seekingControls;
     private double _preferredVolume;
 
     public bool CanSeek => HasVideo && mediaElement != null && mediaElement.MediaDuration > 0;
@@ -73,25 +74,19 @@ public partial class ViewerPanel : UserControl, IDisposable, INotifyPropertyChan
         if (mediaElement != null) mediaElement.Volume = muted ? 0 : _preferredVolume;
     }
 
-    public void SetPlaybackRate(double rate)
-    {
-        if (mediaElement?.MediaUriPlayer == null) return;
-        var type = mediaElement.MediaUriPlayer.GetType();
-        foreach (var name in new[] { "SpeedRatio", "PlaybackRate", "Rate" })
-        {
-            var property = type.GetProperty(name);
-            if (property?.CanWrite == true)
-            {
-                try { property.SetValue(mediaElement.MediaUriPlayer, Convert.ChangeType(Math.Max(.25, Math.Min(5, rate)), property.PropertyType)); return; } catch { }
-            }
-        }
-    }
-
     public void ShowPlaybackControls()
     {
         if (!HasVideo) return;
+        _seekingControls = true;
         var show = (Storyboard)videoControlContainer.FindResource("ShowControlStoryboard");
         show.Begin();
+    }
+
+    public void HidePlaybackControls()
+    {
+        _seekingControls = false;
+        if (!HasVideo || videoControlContainer.IsMouseOver) return;
+        ((Storyboard)videoControlContainer.FindResource("HideControlStoryboard")).Begin();
     }
 
     public ViewerPanel(ContextObject context)
@@ -274,7 +269,7 @@ public partial class ViewerPanel : UserControl, IDisposable, INotifyPropertyChan
 
     private void AutoHideViedoControlContainer(object sender, EventArgs e)
     {
-        if (!HasVideo)
+        if (!HasVideo || _seekingControls)
             return;
 
         if (videoControlContainer.IsMouseOver)
