@@ -10,4 +10,5 @@ public interface IVideoPreviewControl
     void SetPreviewMuted(bool muted);
     void ShowPlaybackControls();
     void HidePlaybackControls();
+    void SetPlaybackRate(double rate);
 }

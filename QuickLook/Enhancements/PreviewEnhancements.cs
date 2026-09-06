@@ -127,6 +127,7 @@ internal static class PreviewEnhancements
         {
             Held.Add(key); e.Handled = true; StopSeek();
             _seekKey = key; _seekWindow = Target;
+            (_seekWindow.Plugin as IVideoPreviewControl)?.SetPlaybackRate(1d);
             (_seekWindow.Plugin as IVideoPreviewControl)?.ShowPlaybackControls();
             Seek(); SeekRepeat.Start(Now, EnhancementSettings.HoldDelay, EnhancementSettings.RepeatInterval);
             // The low-level keyboard hook runs on a worker thread. Create the WPF
@@ -141,8 +142,11 @@ internal static class PreviewEnhancements
                     if (_seekWindow == null || !_seekWindow.IsVisible || !Held.Contains(_seekKey) ||
                         Keyboard.Modifiers != ModifierKeys.None) { StopSeek(); return; }
                     if (SeekRepeat.Tick(Now))
+                    {
+                        (_seekWindow.Plugin as IVideoPreviewControl)?.SetPlaybackRate(3d);
                         (_seekWindow.Plugin as IVideoPreviewControl)?.SeekRelative(TimeSpan.FromMilliseconds(
-                            (_seekKey == Forms.Keys.A ? -1 : 1) * 100d));
+                            (_seekKey == Forms.Keys.A ? -1 : 1) * 200d));
+                    }
                 };
                 _seekTimer.Start();
             }), DispatcherPriority.Input);
@@ -153,7 +157,7 @@ internal static class PreviewEnhancements
 
     private static void Seek() => (_seekWindow?.Plugin as IVideoPreviewControl)?.SeekRelative(
         TimeSpan.FromSeconds((_seekKey == Forms.Keys.A ? -1 : 1) * EnhancementSettings.StepSeconds));
-    internal static void StopSeek() { SeekRepeat.Stop(); (_seekWindow?.Plugin as IVideoPreviewControl)?.HidePlaybackControls(); _seekTimer?.Stop(); _seekTimer = null; _seekWindow = null; }
+    internal static void StopSeek() { SeekRepeat.Stop(); (_seekWindow?.Plugin as IVideoPreviewControl)?.SetPlaybackRate(1d); (_seekWindow?.Plugin as IVideoPreviewControl)?.HidePlaybackControls(); _seekTimer?.Stop(); _seekTimer = null; _seekWindow = null; }
 
     private static async void Save(ViewerWindow window)
     {
