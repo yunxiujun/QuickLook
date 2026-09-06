@@ -46,7 +46,8 @@ internal class KeystrokeDispatcher : IDisposable
         _validKeys =
         [
             Keys.Up, Keys.Down, Keys.Left, Keys.Right,
-            Keys.Enter, Keys.Space, Keys.Escape, Keys.F11
+            Keys.Enter, Keys.Space, Keys.Escape, Keys.F11,
+            Keys.A, Keys.D, Keys.Insert
         ];
     }
 
