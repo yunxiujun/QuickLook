@@ -129,19 +129,24 @@ internal static class PreviewEnhancements
             _seekKey = key; _seekWindow = Target;
             (_seekWindow.Plugin as IVideoPreviewControl)?.ShowPlaybackControls();
             Seek(); SeekRepeat.Start(Now, EnhancementSettings.HoldDelay, EnhancementSettings.RepeatInterval);
-            _seekTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(25) };
-            _seekTimer.Tick += (_, _) =>
+            // The low-level keyboard hook runs on a worker thread. Create the WPF
+            // timer on the application's dispatcher so ticks are actually delivered.
+            Application.Current.Dispatcher.BeginInvoke(new Action(() =>
             {
-                if (!InScope() || Target != _seekWindow || !Held.Contains(_seekKey) ||
-                    Keyboard.Modifiers != ModifierKeys.None) { StopSeek(); return; }
-                if (SeekRepeat.Tick(Now))
+                if (!Held.Contains(_seekKey) || _seekWindow == null || !_seekWindow.IsVisible) return;
+                _seekTimer = new DispatcherTimer(DispatcherPriority.Input, Application.Current.Dispatcher)
+                { Interval = TimeSpan.FromMilliseconds(25) };
+                _seekTimer.Tick += (_, _) =>
                 {
-                    // Long press is continuous timeline movement, independent of the
-                    // DirectShow player's optional playback-rate support.
-                    (_seekWindow.Plugin as IVideoPreviewControl)?.SeekRelative(TimeSpan.FromMilliseconds((_seekKey == Forms.Keys.A ? -1 : 1) * 100d));
-                }
-            };
-            _seekTimer.Start(); return true;
+                    if (_seekWindow == null || !_seekWindow.IsVisible || !Held.Contains(_seekKey) ||
+                        Keyboard.Modifiers != ModifierKeys.None) { StopSeek(); return; }
+                    if (SeekRepeat.Tick(Now))
+                        (_seekWindow.Plugin as IVideoPreviewControl)?.SeekRelative(TimeSpan.FromMilliseconds(
+                            (_seekKey == Forms.Keys.A ? -1 : 1) * 100d));
+                };
+                _seekTimer.Start();
+            }), DispatcherPriority.Input);
+            return true;
         }
         return false;
     }
