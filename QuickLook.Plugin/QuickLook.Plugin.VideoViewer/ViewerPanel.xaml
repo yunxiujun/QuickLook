@@ -125,11 +125,6 @@
             <Grid.Style>
                 <Style TargetType="Grid">
                     <Setter Property="Opacity" Value="1" />
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding HasVideo, ElementName=viewerPanel}" Value="True">
-                            <Setter Property="Opacity" Value="0" />
-                        </DataTrigger>
-                    </Style.Triggers>
                 </Style>
             </Grid.Style>
             <Grid.Resources>
