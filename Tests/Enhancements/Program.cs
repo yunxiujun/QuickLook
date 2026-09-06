@@ -16,10 +16,11 @@ hold.Stop();
 Check(!hold.Tick(10000), "Release or context change stops repeating");
 hold.Start(11000, 350, 200);
 hold.Stop();
-Check(!hold.Tick(11350), "Tap released before delay stays a single seek");
+    Check(!hold.Tick(11350), "Tap released before delay stays a single seek");
 hold.Start(12000, 350, 200);
 Check(hold.Tick(20000) && !hold.Tick(20000), "Delayed UI tick does not cause catch-up seek storm");
-hold.Stop();
+    hold.Stop();
+    Check(EnhancementSettingsDefaults.StepSeconds == 10, "Tap seek defaults to 10 seconds");
 Console.WriteLine("PASS: continuous held seek, tap, release/cancel and delayed-tick behavior");
 try
 {

@@ -11,7 +11,7 @@ internal static class EnhancementSettings
     private const string Domain = "QuickLook.Enhancements";
     internal static string SaveRoot => SettingHelper.Get("SaveRoot", Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "QuickLook"), Domain);
-    internal static int StepSeconds => Math.Max(1, Math.Min(600, SettingHelper.Get("StepSeconds", 5, Domain)));
+    internal static int StepSeconds => Math.Max(1, Math.Min(600, SettingHelper.Get("StepSeconds", 10, Domain)));
     internal static int HoldDelay => Math.Max(100, Math.Min(2000, SettingHelper.Get("HoldDelay", 350, Domain)));
     internal static int RepeatInterval => Math.Max(100, Math.Min(2000, SettingHelper.Get("RepeatInterval", 200, Domain)));
 

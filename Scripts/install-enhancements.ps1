@@ -34,7 +34,7 @@ try {
     $settings = Join-Path $target 'UserData/QuickLook.Enhancements.config'
     if ($DefaultSaveRoot -and !(Test-Path -LiteralPath $settings)) {
         $doc = New-Object System.Xml.XmlDocument
-        $doc.LoadXml('<Settings><SaveRoot/><StepSeconds>5</StepSeconds><HoldDelay>350</HoldDelay><RepeatInterval>200</RepeatInterval></Settings>')
+        $doc.LoadXml('<Settings><SaveRoot/><StepSeconds>10</StepSeconds><HoldDelay>350</HoldDelay><RepeatInterval>200</RepeatInterval></Settings>')
         $doc.Settings.SaveRoot = [IO.Path]::GetFullPath($DefaultSaveRoot)
         $doc.Save($settings)
     }
