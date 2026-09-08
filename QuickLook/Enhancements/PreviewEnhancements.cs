@@ -163,13 +163,14 @@ internal static class PreviewEnhancements
     {
         var path = window.CurrentPath;
         if (!Saving.Add(path)) return;
+        SaveNotification.Started(path);
         try
         {
             var root = EnhancementSettings.SaveRoot;
             var saved = await System.Threading.Tasks.Task.Run(() => QuickSaveService.CopyAsync(path, root));
-            TrayIconManager.ShowNotification("已保存", saved);
+            SaveNotification.Finished(System.IO.Path.GetFileName(saved), false);
         }
-        catch (Exception e) { TrayIconManager.ShowNotification("保存失败", e.Message, true); }
+        catch (Exception e) { SaveNotification.Finished("保存失败：" + e.Message, true); }
         finally { Saving.Remove(path); }
     }
 
