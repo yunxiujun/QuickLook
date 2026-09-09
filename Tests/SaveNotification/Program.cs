@@ -20,6 +20,9 @@ internal static class Program
                 for (var i = 1; i < 11; i++) SaveNotification.Started("test-" + i + ".png");
                 for (var i = 0; i < 11; i++) SaveNotification.Finished("test-" + i + ".png", false);
                 Check(app.Windows.Count == 1 && notice.IsVisible, "Rapid saves must share one visible notification");
+                SaveNotification.Started("duplicate.png");
+                SaveNotification.Skipped("已收藏过：duplicate.png");
+                Check(app.Windows.Count == 1 && notice.IsVisible, "Duplicate status must reuse the same notification");
                 await Task.Delay(1000);
                 SaveNotification.Started("last.png"); SaveNotification.Finished("last.png", false);
                 await Task.Delay(1100);

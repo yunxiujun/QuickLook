@@ -30,11 +30,18 @@ try
     {
         var source = Path.Combine(input, pair.Item1);
         var bytes = new byte[1024 * 1024 + 17]; new Random(42).NextBytes(bytes); File.WriteAllBytes(source, bytes);
-        var copies = await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => QuickSaveService.CopyAsync(source, output)));
-        Check(copies.Distinct().Count() == 4, "Concurrent copies must not overwrite");
+        var firstCopy = await QuickSaveService.CopyAsync(source, output);
+        var copies = new[] { firstCopy };
         foreach (var copy in copies)
         { Check(Path.GetFileName(Path.GetDirectoryName(copy)) == pair.Item2, "Category"); Check(File.ReadAllBytes(copy).SequenceEqual(bytes), "Copy integrity"); }
         Check(File.ReadAllBytes(source).SequenceEqual(bytes), "Source preserved");
+        await AlreadySaved(() => QuickSaveService.CopyAsync(source, output));
+        Check(Directory.EnumerateFiles(Path.GetDirectoryName(firstCopy), Path.GetFileNameWithoutExtension(source) + "*" + Path.GetExtension(source)).Count() == 1,
+            "Repeated save must not create a numbered duplicate");
+        bytes[0] ^= 0xff; File.WriteAllBytes(source, bytes);
+        var changedCopy = await QuickSaveService.CopyAsync(source, output);
+        Check(changedCopy != firstCopy && changedCopy.Contains("(1)"), "Changed source may be saved again");
+        Check(File.ReadAllBytes(changedCopy).SequenceEqual(bytes), "Changed copy integrity");
     }
     await Fails(() => QuickSaveService.CopyAsync(input, output));
     await Fails(() => QuickSaveService.CopyAsync(Path.Combine(input, "missing"), output));
@@ -50,9 +57,11 @@ try
     Check(SelectionPaths.Parse(string.Join("\r\n", many)).Length == 10, "Everything rejects over-limit selection");
     await Fails(() => Task.FromResult(SelectionPaths.Parse("not a file")[0]));
     Console.WriteLine("PASS: Everything quoted/unicode paths, selection order, duplicates, over-limit and invalid input");
-    Console.WriteLine("PASS: categorization, unicode paths, concurrent collisions, byte integrity, source preservation, invalid source/target, partial cleanup");
+    Console.WriteLine("PASS: categorization, unicode paths, duplicate rejection, changed-file versioning, byte integrity, source preservation, invalid source/target, partial cleanup");
 }
 finally { Directory.Delete(root, true); }
 static void Check(bool value, string message) { if (!value) throw new Exception(message); }
 static async Task Fails(Func<Task<string>> action)
 { try { await action(); } catch (IOException) { return; } throw new Exception("Expected IO failure"); }
+static async Task AlreadySaved(Func<Task<string>> action)
+{ try { await action(); } catch (QuickSaveService.AlreadySavedException) { return; } throw new Exception("Expected duplicate rejection"); }

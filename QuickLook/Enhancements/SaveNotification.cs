@@ -16,7 +16,7 @@ internal sealed class SaveNotification : Window
     private readonly TextBlock _title;
     private readonly TextBlock _detail;
     private readonly DispatcherTimer _dismiss;
-    private int _pending, _completed, _failed;
+    private int _pending, _completed, _skipped, _failed;
 
     [DllImport("user32.dll")] private static extern int GetWindowLong(IntPtr hwnd, int index);
     [DllImport("user32.dll")] private static extern int SetWindowLong(IntPtr hwnd, int index, int value);
@@ -47,7 +47,7 @@ internal sealed class SaveNotification : Window
     internal static void Started(string path)
     {
         var notice = _current ??= new SaveNotification();
-        if (!notice.IsVisible && notice._pending == 0) notice._completed = notice._failed = 0;
+        if (!notice.IsVisible && notice._pending == 0) notice._completed = notice._skipped = notice._failed = 0;
         notice._pending++;
         notice.Update("正在收藏：" + System.IO.Path.GetFileName(path));
     }
@@ -61,10 +61,20 @@ internal sealed class SaveNotification : Window
         notice.Update(message);
     }
 
+    internal static void Skipped(string message)
+    {
+        var notice = _current;
+        if (notice == null) return;
+        notice._pending = Math.Max(0, notice._pending - 1);
+        notice._skipped++;
+        notice.Update(message);
+    }
+
     private void Update(string detail)
     {
         _dismiss.Stop();
         _title.Text = $"已收藏 {_completed} 个" + (_pending > 0 ? $" · 正在保存 {_pending} 个" : "") +
+            (_skipped > 0 ? $" · 已存在 {_skipped} 个" : "") +
             (_failed > 0 ? $" · 失败 {_failed} 个" : "");
         _detail.Text = detail;
         if (!IsVisible) Show();

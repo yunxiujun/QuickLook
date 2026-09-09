@@ -170,6 +170,8 @@ internal static class PreviewEnhancements
             var saved = await System.Threading.Tasks.Task.Run(() => QuickSaveService.CopyAsync(path, root));
             SaveNotification.Finished(System.IO.Path.GetFileName(saved), false);
         }
+        catch (QuickSaveService.AlreadySavedException e)
+        { SaveNotification.Skipped("已收藏过：" + System.IO.Path.GetFileName(e.ExistingPath)); }
         catch (Exception e) { SaveNotification.Finished("保存失败：" + e.Message, true); }
         finally { Saving.Remove(path); }
     }
